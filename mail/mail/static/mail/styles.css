@@ -1,3 +1,13 @@
 textarea {
     min-height: 400px;
 }
+
+.email-div {
+    border-style: solid;
+    margin-bottom: 5px;
+}
+
+.timestamp {
+    float: right;
+    text-align: right;
+}

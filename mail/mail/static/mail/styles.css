@@ -4,10 +4,16 @@ textarea {
 
 .email-div {
     border-style: solid;
+    border-color: white;
     margin-bottom: 5px;
+}
+.email-div:hover {
+    border-color: blue;
 }
 
 .timestamp {
     float: right;
     text-align: right;
 }
+
+

@@ -18,13 +18,13 @@ function compose_email() {
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
 
+  document.querySelector('#compose-recipients').disabled = false;
+  document.querySelector('#compose-subject').disabled = false;
   // Clear out composition fields
-  let recipients = document.querySelector('#compose-recipients').value;
-  recipients = '';
-  let subject = document.querySelector('#compose-subject').value;
-  subject = '';
-  let body = document.querySelector('#compose-body').value;
-  body = '';
+  document.querySelector('#compose-recipients').value = '';
+  document.querySelector('#compose-subject').value = '';
+  document.querySelector('#compose-body').value = '';
+
 }
 
 function send_email(event) {
@@ -60,6 +60,7 @@ function send_email(event) {
 function load_mailbox(mailbox) {
   
   // Show the mailbox and hide other views
+  document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
 
@@ -87,6 +88,9 @@ function create_email(email) {
   email_div.className = 'email-div';
   // maybe this is not the fastest way to do things, maybe I can write out a html stub using django, and reference it to it here
   email_div.innerHTML = `<span class="sender col-4"><b>${email['sender']}</b></span><span class="subject col-4">${email['subject']}</span><span class="timestamp col-4">${email['timestamp']}</span><br>`;
+  if (email['read'] == false) {
+    email_div.style.backgroundColor = '#D3D3D3';
+  }
   document.querySelector('#emails-view').appendChild(email_div);
 
   email_div.addEventListener('click', () => {open_email(email['id'])});
@@ -112,10 +116,59 @@ function open_email(id) {
       <span class="inner-sender"><b>From:</b> ${email['sender']}</span><br>
       <span class="inner-recipients"><b>To:</b> ${email['recipients']}</span><br>
       <span class="inner-subject"><b>Subject:</b> ${email['subject']}</span><br>
-      <span class="inner-timestamp"><b>Timestamp:</b> ${email['sender']}</span>
+      <span class="inner-timestamp"><b>Timestamp:</b> ${email['sender']}</span><br>
+      <button class="btn btn-sm btn-outline-primary" id="reply">Reply</button>
+      <button class="btn btn-sm btn-outline-primary" id="archive">Archive</button>
       <hr>
       <span class="inner-body"> ${email['body']}</span>
       `
-      document.querySelector('#emails-view').appendChild(email_div);
+    document.querySelector('#emails-view').appendChild(email_div);
+    if(email['read'] != true) {
+      fetch(get_email, {
+        method: 'PUT',
+        body: JSON.stringify({
+          read: true
+        })
+      })
+      .then(response => response.json())
+      .then(result => {
+        console.log(result);
+      });
+    }
+    document.querySelector('#reply').addEventListener('click',() => {reply(email)});
+    document.querySelector('#archive').addEventListener('click', () => {
+      let away = false;
+      if (email['archived'] == false) { //email is not archived
+        away = true;
+      }
+      fetch(get_email, {
+        method: 'PUT',
+        body: JSON.stringify({
+          archived: away
+        })
+      })
+      .then(response => response.json())
+      .then(result => {
+        console.log(result);
+      }); 
+    });
+
+
   });
+}
+
+
+function reply(email) {
+
+
+  // Show compose view and hide other views
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#compose-view').style.display = 'block';
+
+  // Clear out composition fields
+  document.querySelector('#compose-recipients').value = email['sender'];
+  document.querySelector('#compose-recipients').disabled = true;
+  document.querySelector('#compose-subject').value = 'Re: ' + email['subject'];
+  document.querySelector('#compose-subject').disabled = true;
+  document.querySelector('#compose-body').value = `On ${email['timestamp']}\n` + email['body'] + '\n';
 }
